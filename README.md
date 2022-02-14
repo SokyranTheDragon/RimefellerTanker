@@ -8,7 +8,7 @@ There's built-in native Multiplayer support.
 
 To set the textures for gizmos, look into included Textures directory - it'll contain 2 text files. You need to use graphical files supported by RimWorld with the same name - but obviously different extension thatn txt.
 
-To use this component in your things, first, make sure that your thing also has `CompProperties_Pipe` component attached.
+To use this component in your things, first, make sure that your thing also has `CompProperties_Pipe` component attached. As a side note, all SRTS ships should have it by default.
 Second, add the component to your thing:
 
 ```xml
