@@ -14,7 +14,7 @@ Second, add the component to your thing:
 ```xml
 <li Class="RimefellerTanker.CompProperties_RimefellerTanker">
   <!--Default values-->
-  <contents>Fuel</contents>
+  <contents>Fuel</contents> <!-- Also supports `Oil` value -->
   <storageCap>10000</storageCap>
   <fillAmount>0.5</fillAmount>
   <drainAmount>0.5</drainAmount>
