@@ -30,11 +30,4 @@
   <ItemGroup>
     <Publicize Include="Assembly-CSharp" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Rimefeller">
-      <HintPath>..\..\References\Rimefeller.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-  </ItemGroup>
 </Project>

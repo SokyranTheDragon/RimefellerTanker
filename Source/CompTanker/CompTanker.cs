@@ -1,17 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using CompTanker.Compat;
 using Multiplayer.API;
-using Rimefeller;
 using UnityEngine;
 using Verse;
 
-namespace RimefellerTanker
+namespace CompTanker
 {
-    public class CompRimefellerTanker : ThingComp
+    [HotSwappable]
+    public class CompTanker : ThingComp
     {
-        private CompPipe compPipe;
-        private MapComponent_Rimefeller mapComp;
         public bool drawOverlay = false;
 
         // Gizmos
@@ -21,14 +20,12 @@ namespace RimefellerTanker
         private Command_Toggle gizmoToggleFill;
 
         // Exposed fields
-        private double storedAmount = 0;
-        private bool isDraining = false;
-        private bool isFilling = false;
+        public double storedAmount = 0;
+        public bool isDraining = false;
+        public bool isFilling = false;
 
         public double CapPercent => (storedAmount / Props.storageCap);
-        private CompPipe CompPipe => compPipe ??= parent.GetComp<CompPipe>();
-        private MapComponent_Rimefeller MapComp => mapComp ??= Find.CurrentMap.GetComponent<MapComponent_Rimefeller>();
-        private CompProperties_RimefellerTanker Props => (CompProperties_RimefellerTanker)props;
+        public CompProperties_Tanker Props => (CompProperties_Tanker)props;
         private Command_Action GizmoDebugFill => gizmoDebugFill ??= new Command_Action
         {
             action = DebugFill,
@@ -57,84 +54,65 @@ namespace RimefellerTanker
         };
 
         [SyncMethod]
-        private void ToggleFill()
+        internal void ToggleFill()
         {
             isDraining = false;
             isFilling = !isFilling;
         }
 
         [SyncMethod]
-        private void ToggleDrain()
+        internal void ToggleDrain()
         {
             isFilling = false;
             isDraining = !isDraining;
         }
 
         [SyncMethod(debugOnly = true)]
-        private void DebugFill() => storedAmount = Props.storageCap;
+        internal void DebugFill() => storedAmount = Props.storageCap;
 
         [SyncMethod(debugOnly = true)]
-        private void DebugEmpty() => storedAmount = 0;
+        internal void DebugEmpty() => storedAmount = 0;
 
         public override void PostDrawExtraSelectionOverlays()
         {
             base.PostDrawExtraSelectionOverlays();
-            MapComp.MarkTowersForDraw = true;
-        }
 
-        public override void PostSpawnSetup(bool respawningAfterLoad)
-        {
-            base.PostSpawnSetup(respawningAfterLoad);
-
-            compPipe = null;
-            mapComp = null;
+            switch (Props.contents)
+            {
+                case TankType.Fuel:
+                case TankType.Oil:
+                    RimefellerCompat.MarkForDrawing(parent.Map);
+                    break;
+                case TankType.Water:
+                    BadHygieneCompat.MarkForDrawing(parent.Map);
+                    break;
+                case TankType.Helixien:
+                    break;
+                case TankType.Invalid:
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(Props.contents), Props.contents, "Invalid tanker contents");
+            }
         }
 
         public override void CompTick()
         {
             base.CompTick();
-            if (CompPipe == null) return;
 
-            if (isDraining)
+            switch (Props.contents)
             {
-                if (storedAmount <= 0)
-                {
-                    isDraining = false;
-                    return;
-                }
-
-                var num = Math.Min(storedAmount, Props.drainAmount);
-                if (num > 0)
-                {
-                    storedAmount -= num;
-                    storedAmount += Props.contents switch
-                    {
-                        TankClass.Fuel => CompPipe.pipeNet.PushFuel((float)num),
-                        TankClass.Oil => CompPipe.pipeNet.PushCrude(num),
-                        _ => num,
-                    };
-                }
-            }
-            else if (isFilling)
-            {
-                if (storedAmount >= Props.storageCap)
-                {
-                    isFilling = false;
-                    return;
-                }
-
-                var num = Math.Min(Props.storageCap - storedAmount, Props.fillAmount);
-                num = Math.Max(num, 0);
-
-                var success = Props.contents switch
-                {
-                    TankClass.Fuel => CompPipe.pipeNet.PullFuel(num),
-                    TankClass.Oil => CompPipe.pipeNet.PullOil(num),
-                    _ => false,
-                };
-
-                if (success)
-                    storedAmount += num;
+                case TankType.Fuel:
+                case TankType.Oil:
+                    RimefellerCompat.HandleTick(this);
+                    break;
+                case TankType.Water:
+                    BadHygieneCompat.HandleTick(this);
+                    break;
+                case TankType.Helixien:
+                    VanillaFurnitureExpandedPowerCompat.HandleTick(this);
+                    break;
+                case TankType.Invalid:
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(Props.contents), Props.contents, "Invalid tanker contents");
             }
         }
 
@@ -169,10 +147,10 @@ namespace RimefellerTanker
 
             var r = default(GenDraw.FillableBarRequest);
             r.center = parent.DrawPos + Vector3.up * 0.1f;
-            r.size = CompStorageTank.BarSize;
+            r.size = ModResources.BarSize;
             r.fillPercent = (float)CapPercent;
-            r.filledMat = CompStorageTank.WaterBarFilledMat;
-            r.unfilledMat = CompStorageTank.BarUnfilledMat;
+            r.filledMat = ModResources.BarFilledMat;
+            r.unfilledMat = ModResources.BarUnfilledMat;
             r.margin = 0.15f;
             var rotation = parent.Rotation;
             rotation.Rotate(RotationDirection.Clockwise);
@@ -188,10 +166,16 @@ namespace RimefellerTanker
 
             var stringBuilder = new StringBuilder();
 
-            stringBuilder.AppendLine(Props.contents == TankClass.Fuel
-                ? "FuelStorage".Translate(storedAmount.ToString("0.0"), Props.storageCap)
-                : "OilStorage".Translate(storedAmount.ToString("0.0"), Props.storageCap));
+            var text = (Props.contents switch
+            {
+                TankType.Fuel => "TankerFuelStorage",
+                TankType.Oil => "TankerOilStorage",
+                TankType.Water => "TankerWaterStorage",
+                TankType.Helixien => "TankerHelixienStorage",
+                TankType.Invalid or _ => throw new ArgumentOutOfRangeException(nameof(Props.contents), Props.contents, "Invalid tanker contents"),
+            }).Translate(storedAmount.ToString("0.0"), Props.storageCap);
 
+            stringBuilder.AppendLine(text);
             if (isFilling)
                 stringBuilder.AppendLine("RimefellerTankerFillingInspect".Translate());
             else if (isDraining)

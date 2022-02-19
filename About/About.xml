@@ -13,11 +13,6 @@
   </description>
   <modDependencies>
     <li>
-      <packageId>Dubwise.Rimefeller</packageId>
-      <displayName>Rimefeller</displayName>
-      <steamWorkshopUrl>steam://url/CommunityFilePage/1321849735</steamWorkshopUrl>
-    </li>
-    <li>
       <packageId>brrainz.harmony</packageId>
       <displayName>Harmony</displayName>
       <steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
@@ -26,7 +21,9 @@
   </modDependencies>
   <loadAfter>
     <li>Ludeon.RimWorld</li>
-    <li>Dubwise.Rimefeller</li>
+    <li>dubwise.dubsbadhygiene</li>
+    <li>dubwise.rimefeller</li>
+    <li>vanillaexpanded.vfepower</li>
     <li>brrainz.harmony</li>
   </loadAfter>
 </ModMetaData>
