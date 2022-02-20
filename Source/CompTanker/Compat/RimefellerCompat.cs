@@ -58,13 +58,14 @@ namespace CompTanker.Compat
                     return;
                 }
 
+
                 var num = Math.Min(tanker.storedAmount, tanker.Props.drainAmount);
                 if (num > 0)
                 {
                     tanker.storedAmount -= num;
                     tanker.storedAmount += tanker.Props.contents switch
                     {
-                        TankType.Fuel => (double)pushFuelMethod(pipeNetGetter(compPipe), num),
+                        TankType.Fuel => (float)pushFuelMethod(pipeNetGetter(compPipe), (float)num),
                         TankType.Oil => (double)pushOilMethod(pipeNetGetter(compPipe), num),
                         _ => num,
                     };
