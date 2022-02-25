@@ -1,4 +1,8 @@
-# Comp Tanker
+# This project has moved! [Click here to go to the current page!](https://github.com/DRA-Mods/Tanker-Framework)
+
+
+
+## Comp Tanker
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/E1E120FY7)
 
